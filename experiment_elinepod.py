@@ -17,13 +17,14 @@ XOSPASS = "BPnJwPeo7jB0dedBRDCB"
 
 client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-client.connect("140.113.131.168", username="winlab",password="winlab")
+client.connect("140.113.131.168", username="winlab", password="winlab")
 
 CLEAN = "cd ~/cord/build/; make xos-teardown; make clean-openstack;"
 BUILD = "cd ~/cord/build/; make -j4 build; make compute-node-refresh"
-TEST = "cd ~/cord/build/; make pod-test"
+#TEST = "cd ~/cord/build/; make pod-test"
 TEST = 'curl -H "xos-username: %s" -H "xos-password: %s" ' % (XOSUSER, XOSPASS)
 VSG = TEST + "-X POST http://xos-tosca//xos-tosca/run --data-binary @/opt/cord_profile/test-subscriber.yaml"
+ELINE = TEST + "-X POST http://xos-tosca//xos-tosca/run --data-binary @/opt/cord_profile/test-elineservice.yaml"
 
 OPENRC = "source /opt/cord_profile/admin-openrc.sh; "
 NOVA = OPENRC + "nova list --all-tenants"
@@ -68,9 +69,9 @@ for x in range(1, ROUND + 1):
 
     # Time for start test
     start = time.time()
-    log(x, "Start vSG")
+    log(x, "Start ELINE")
     #stdout = Popen_local(TEST)
-    stdout,_ = exec_head(VSG)
+    stdout,_ = exec_head(ELINE)
     print(stdout)
 
     # Routine check network up
@@ -94,7 +95,7 @@ for x in range(1, ROUND + 1):
     # Routing check synchronizer done
     log(x, "Routine Check Synchronizer is done or not")
     while True:
-        stdout, _ = exec_head(VSGAPI)
+        stdout, _ = exec_head(ELINEAPI)
         j = json.loads(stdout)
         if "items" not in j:
             continue
@@ -109,6 +110,7 @@ for x in range(1, ROUND + 1):
 
     results.append([x, neutron_time - start, nova_time - start, synced_time - start])
 
-with open("result_pod_vsg_2.log", "w") as f:
+with open("result_pod_eline_3.log", "w") as f:
     for x in results:
         f.write(", ".join(str(x)))
+        
